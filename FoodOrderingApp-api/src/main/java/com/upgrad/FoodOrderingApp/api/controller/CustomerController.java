@@ -107,4 +107,24 @@ public class CustomerController {
         return new ResponseEntity<LoginResponse>(loginResponse,headers,HttpStatus.OK);
     }
 
+    /* This method handles the customer logout ,It takes the Bearer accessToken from authorization in the header and logs out the customer
+    and returns a LogoutResponse conatining UUID of customer and the successful message.If error returns the error code with corresponding Message.
+     */
+    @CrossOrigin
+    @RequestMapping(method = RequestMethod.POST,path = "/logout",produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<LogoutResponse> customerLogout (@RequestHeader("authorization")final String authorization)throws AuthorizationFailedException {
+        //Access the accessToken from the request Header
+        String accessToken = authorization.split("Bearer ")[1];
+
+        //Calls customerService logout method which takes accessToken,if data is all right updates customerAuthEntity logout time and returns updated one.
+        CustomerAuthEntity customerAuthEntity =  customerService.logout(accessToken);
+
+        //Creating Logout response for the request containing UUID and Successful message.
+        LogoutResponse logoutResponse = new LogoutResponse()
+                .id(customerAuthEntity.getCustomer().getUuid())
+                .message("LOGGED OUT SUCCESSFULLY");
+
+        return new ResponseEntity<LogoutResponse>(logoutResponse,HttpStatus.OK);
+    }
+
 }
