@@ -121,5 +121,28 @@ public class UtilityProvider {
         return true;
     }
 
+    //To sort the HashMap by values.
+    public Map<String,Integer> sortMapByValues(Map<String,Integer> map){
+
+        // Create a list from elements of itemCountMap
+        List<Map.Entry<String,Integer>> list = new LinkedList<Map.Entry<String, Integer>>(map.entrySet());
+
+        // Sort the list
+        Collections.sort(list, new Comparator<Map.Entry<String, Integer>>() {
+            @Override
+            public int compare(Map.Entry<String, Integer> o1, Map.Entry<String, Integer> o2) {
+                return (o2.getValue().compareTo(o1.getValue()));
+            }
+        });
+
+        //Creating the Sorted HashMap
+        Map<String, Integer> sortedByValueMap = new LinkedHashMap<String, Integer>();
+        for (Map.Entry<String, Integer> item : list) {
+            sortedByValueMap.put(item.getKey(), item.getValue());
+        }
+
+        return sortedByValueMap;
+    }
+
 }
 
