@@ -102,5 +102,24 @@ public class UtilityProvider {
         }
     }
 
+    //To validate Customer update request
+    public boolean isValidUpdateCustomerRequest (String firstName)throws UpdateCustomerException {
+        if (firstName == null || firstName == "") {
+            throw new UpdateCustomerException("UCR-002", "First name field should not be empty");
+        }
+        return true;
+    }
+
+    //To validate the password Update Request.
+    public boolean isValidUpdatePasswordRequest(String oldPassword,String newPassword) throws UpdateCustomerException{
+        if (oldPassword == null || oldPassword == "") {
+            throw new UpdateCustomerException("UCR-003", "No field should be empty");
+        }
+        if (newPassword == null || newPassword == "") {
+            throw new UpdateCustomerException("UCR-003", "No field should be empty");
+        }
+        return true;
+    }
+
 }
 
