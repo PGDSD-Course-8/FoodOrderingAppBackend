@@ -7,6 +7,7 @@ import com.upgrad.FoodOrderingApp.service.businness.CustomerService;
 import com.upgrad.FoodOrderingApp.service.businness.RestaurantService;
 import com.upgrad.FoodOrderingApp.service.entity.CategoryEntity;
 import com.upgrad.FoodOrderingApp.service.entity.RestaurantEntity;
+import com.upgrad.FoodOrderingApp.service.exception.CategoryNotFoundException;
 import com.upgrad.FoodOrderingApp.service.exception.RestaurantNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -161,6 +162,67 @@ public class RestaurantController {
         }else {
             return new ResponseEntity<RestaurantListResponse>(new RestaurantListResponse(),HttpStatus.OK);
         }
+    }
+
+    /* The method handles get Restaurant By Category Id. It takes category_id as the path variable.
+   & produces response in RestaurantListResponse and returns list of restaurant with details from the db. If error returns error code and error message.
+   */
+    @CrossOrigin
+    @RequestMapping(method = RequestMethod.GET,path = "/category/{category_id}",produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<RestaurantListResponse> getRestaurantByCategoryId(@PathVariable(value = "category_id")String categoryId) throws CategoryNotFoundException {
+
+        //Calls restaurantByCategory method of restaurantService to get the list of restaurant entity.
+        List<RestaurantEntity> restaurantEntities = restaurantService.restaurantByCategory(categoryId);
+
+        //Creating restaurant list for the response
+        List<RestaurantList> restaurantLists = new LinkedList<>();
+        for (RestaurantEntity restaurantEntity : restaurantEntities) { //Looping for each restaurant entity in restaurantEntities
+
+            //Calls  getCategoriesByRestaurant to get categories of the corresponding restaurant.
+            List<CategoryEntity> categoryEntities = categoryService.getCategoriesByRestaurant(restaurantEntity.getUuid());
+            String categories = new String();
+            ListIterator<CategoryEntity> listIterator = categoryEntities.listIterator();
+            //To concat the category names.
+            while (listIterator.hasNext()) {
+                categories = categories + listIterator.next().getCategoryName();
+                if (listIterator.hasNext()) {
+                    categories = categories + ", ";
+                }
+            }
+
+            //Creating the RestaurantDetailsResponseAddressState for the RestaurantDetailsResponseAddress
+            RestaurantDetailsResponseAddressState restaurantDetailsResponseAddressState = new RestaurantDetailsResponseAddressState()
+                    .id(UUID.fromString(restaurantEntity.getAddress().getState().getStateUuid()))
+                    .stateName(restaurantEntity.getAddress().getState().getStateName());
+
+            //Creating the RestaurantDetailsResponseAddress for the RestaurantList
+            RestaurantDetailsResponseAddress restaurantDetailsResponseAddress = new RestaurantDetailsResponseAddress()
+                    .id(UUID.fromString(restaurantEntity.getAddress().getUuid()))
+                    .city(restaurantEntity.getAddress().getCity())
+                    .flatBuildingName(restaurantEntity.getAddress().getFlatBuilNo())
+                    .locality(restaurantEntity.getAddress().getLocality())
+                    .pincode(restaurantEntity.getAddress().getPincode())
+                    .state(restaurantDetailsResponseAddressState);
+
+            //Creating RestaurantList to add to list of RestaurantList
+            RestaurantList restaurantList = new RestaurantList()
+                    .id(UUID.fromString(restaurantEntity.getUuid()))
+                    .restaurantName(restaurantEntity.getRestaurantName())
+                    .averagePrice(restaurantEntity.getAvgPrice())
+                    .categories(categories)
+                    .customerRating(BigDecimal.valueOf(restaurantEntity.getCustomerRating()))
+                    .numberCustomersRated(restaurantEntity.getNumberCustomersRated())
+                    .photoURL(restaurantEntity.getPhotoUrl())
+                    .address(restaurantDetailsResponseAddress);
+
+            //Adding it to the list
+            restaurantLists.add(restaurantList);
+
+        }
+
+        //Creating the RestaurantListResponse by adding the list of RestaurantList
+        RestaurantListResponse restaurantListResponse = new RestaurantListResponse().restaurants(restaurantLists);
+        return new ResponseEntity<RestaurantListResponse>(restaurantListResponse, HttpStatus.OK);
 
     }
 }

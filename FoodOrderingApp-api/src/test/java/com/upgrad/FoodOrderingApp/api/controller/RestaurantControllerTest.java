@@ -11,6 +11,7 @@ import com.upgrad.FoodOrderingApp.service.entity.*;
 //import com.upgrad.FoodOrderingApp.service.exception.CategoryNotFoundException;
 //import com.upgrad.FoodOrderingApp.service.exception.InvalidRatingException;
 //import com.upgrad.FoodOrderingApp.service.exception.RestaurantNotFoundException;
+import com.upgrad.FoodOrderingApp.service.exception.CategoryNotFoundException;
 import com.upgrad.FoodOrderingApp.service.exception.RestaurantNotFoundException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -160,63 +161,63 @@ public class RestaurantControllerTest {
     }
 
 
-//    // ------------------------------------------ GET /restaurant/category/{category_id} ------------------------------------------
-//
-//    //This test case passes when you are able to retrieve restaurant belonging to any particular categories.
-//    @Test
-//    public void shouldGetRestaurantDetailsByGivenCategoryId() throws Exception {
-//        final RestaurantEntity restaurantEntity = getRestaurantEntity();
-//        when(mockRestaurantService.restaurantByCategory("someCategoryId"))
-//                .thenReturn(Collections.singletonList(restaurantEntity));
-//
-//        final CategoryEntity categoryEntity = getCategoryEntity();
-//        when(mockCategoryService.getCategoriesByRestaurant(restaurantEntity.getUuid()))
-//                .thenReturn(Collections.singletonList(categoryEntity));
-//
-//        final String responseString = mockMvc
-//                .perform(get("/restaurant/category/someCategoryId").contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-//                .andExpect(status().isOk())
-//                .andReturn().getResponse().getContentAsString();
-//
-//        final RestaurantListResponse restaurantListResponse = new ObjectMapper().readValue(responseString, RestaurantListResponse.class);
-//        assertEquals(restaurantListResponse.getRestaurants().size(), 1);
-//
-//        final RestaurantList restaurantList = restaurantListResponse.getRestaurants().get(0);
-//        assertEquals(restaurantList.getId().toString(), restaurantEntity.getUuid());
-//        assertEquals(restaurantList.getAddress().getId().toString(), restaurantEntity.getAddress().getUuid());
-//        assertEquals(restaurantList.getAddress().getState().getId().toString(), restaurantEntity.getAddress().getState().getUuid());
-//
-//        verify(mockRestaurantService, times(1)).restaurantByCategory("someCategoryId");
-//        verify(mockCategoryService, times(1)).getCategoriesByRestaurant(restaurantEntity.getUuid());
-//    }
-//
-//    //This test case passes when you have handled the exception of trying to fetch any restaurants but your category id
-//    // field is empty.
-//    @Test
-//    public void shouldNotGetRestaurantByCategoryidIfCategoryIdIsEmpty() throws Exception {
-//        when(mockRestaurantService.restaurantByCategory(anyString()))
-//                .thenThrow(new CategoryNotFoundException("CNF-001", "Category id field should not be empty"));
-//
-//        mockMvc
-//                .perform(get("/restaurant/category/emptyString").contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-//                .andExpect(status().isNotFound())
-//                .andExpect(jsonPath("code").value("CNF-001"));
-//        verify(mockRestaurantService, times(1)).restaurantByCategory(anyString());
-//    }
-//
-//    //This test case passes when you have handled the exception of trying to fetch any restaurant by its category id, while there
-//    // is not category by that id in the database
-//    @Test
-//    public void shouldNotGetRestaurantsByCategoryIdIfCategoryDoesNotExistAgainstGivenId() throws Exception {
-//        when(mockRestaurantService.restaurantByCategory("someCategoryId"))
-//                .thenThrow(new CategoryNotFoundException("CNF-002", "No category by this id"));
-//
-//        mockMvc
-//                .perform(get("/restaurant/category/someCategoryId").contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-//                .andExpect(status().isNotFound())
-//                .andExpect(jsonPath("code").value("CNF-002"));
-//        verify(mockRestaurantService, times(1)).restaurantByCategory("someCategoryId");
-//    }
+    // ------------------------------------------ GET /restaurant/category/{category_id} ------------------------------------------
+
+    //This test case passes when you are able to retrieve restaurant belonging to any particular categories.
+    @Test
+    public void shouldGetRestaurantDetailsByGivenCategoryId() throws Exception {
+        final RestaurantEntity restaurantEntity = getRestaurantEntity();
+        when(mockRestaurantService.restaurantByCategory("someCategoryId"))
+                .thenReturn(Collections.singletonList(restaurantEntity));
+
+        final CategoryEntity categoryEntity = getCategoryEntity();
+        when(mockCategoryService.getCategoriesByRestaurant(restaurantEntity.getUuid()))
+                .thenReturn(Collections.singletonList(categoryEntity));
+
+        final String responseString = mockMvc
+                .perform(get("/restaurant/category/someCategoryId").contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        final RestaurantListResponse restaurantListResponse = new ObjectMapper().readValue(responseString, RestaurantListResponse.class);
+        assertEquals(restaurantListResponse.getRestaurants().size(), 1);
+
+        final RestaurantList restaurantList = restaurantListResponse.getRestaurants().get(0);
+        assertEquals(restaurantList.getId().toString(), restaurantEntity.getUuid());
+        assertEquals(restaurantList.getAddress().getId().toString(), restaurantEntity.getAddress().getUuid());
+        assertEquals(restaurantList.getAddress().getState().getId().toString(), restaurantEntity.getAddress().getState().getStateUuid());
+
+        verify(mockRestaurantService, times(1)).restaurantByCategory("someCategoryId");
+        verify(mockCategoryService, times(1)).getCategoriesByRestaurant(restaurantEntity.getUuid());
+    }
+
+    //This test case passes when you have handled the exception of trying to fetch any restaurants but your category id
+    // field is empty.
+    @Test
+    public void shouldNotGetRestaurantByCategoryidIfCategoryIdIsEmpty() throws Exception {
+        when(mockRestaurantService.restaurantByCategory(anyString()))
+                .thenThrow(new CategoryNotFoundException("CNF-001", "Category id field should not be empty"));
+
+        mockMvc
+                .perform(get("/restaurant/category/emptyString").contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("code").value("CNF-001"));
+        verify(mockRestaurantService, times(1)).restaurantByCategory(anyString());
+    }
+
+    //This test case passes when you have handled the exception of trying to fetch any restaurant by its category id, while there
+    // is not category by that id in the database
+    @Test
+    public void shouldNotGetRestaurantsByCategoryIdIfCategoryDoesNotExistAgainstGivenId() throws Exception {
+        when(mockRestaurantService.restaurantByCategory("someCategoryId"))
+                .thenThrow(new CategoryNotFoundException("CNF-002", "No category by this id"));
+
+        mockMvc
+                .perform(get("/restaurant/category/someCategoryId").contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("code").value("CNF-002"));
+        verify(mockRestaurantService, times(1)).restaurantByCategory("someCategoryId");
+    }
 
 
     // ------------------------------------------ GET /restaurant ------------------------------------------
