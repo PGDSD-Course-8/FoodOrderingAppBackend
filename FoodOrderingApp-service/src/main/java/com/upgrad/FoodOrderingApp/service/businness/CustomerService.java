@@ -1,7 +1,9 @@
 package com.upgrad.FoodOrderingApp.service.businness;
 
 import com.upgrad.FoodOrderingApp.service.common.UtilityProvider;
+import com.upgrad.FoodOrderingApp.service.dao.CustomerAuthDao;
 import com.upgrad.FoodOrderingApp.service.dao.CustomerDao;
+import com.upgrad.FoodOrderingApp.service.entity.CustomerAuthEntity;
 import com.upgrad.FoodOrderingApp.service.entity.CustomerEntity;
 import com.upgrad.FoodOrderingApp.service.exception.AuthenticationFailedException;
 import com.upgrad.FoodOrderingApp.service.exception.AuthorizationFailedException;
@@ -28,6 +30,9 @@ public class CustomerService {
 
     @Autowired
     UtilityProvider utilityProvider; // It Provides Data Check methods for various cases
+
+    @Autowired
+    CustomerAuthDao customerAuthDao; //Handles all data related to the customerAuthEntity
 
     /* This method is to saveCustomer.Takes the customerEntity  and saves the Customer to the DB.
    If error throws exception with error code and error message.
@@ -67,6 +72,41 @@ public class CustomerService {
         CustomerEntity createdCustomerEntity = customerDao.createCustomer(customerEntity);
 
         return createdCustomerEntity;
+    }
 
+    /* This method is to authenticate the customer using contact and password  and return the CustomerAuthEntity .
+    If error throws exception with error code and error message.
+    */
+    @Transactional(propagation = Propagation.REQUIRED)
+    public CustomerAuthEntity authenticate(String contactNumber, String password) throws AuthenticationFailedException {
+        //Calls getCustomerByContactNumber method of customerDao using contact no.
+        CustomerEntity customerEntity = customerDao.getCustomerByContactNumber(contactNumber);
+        if (customerEntity == null) {//Checking if CustomerEntity Exists
+            throw new AuthenticationFailedException("ATH-001", "This contact number has not been registered!");
+        }
+
+        //The password is encrypted using the salt stored in the retrived customer entity.
+        String encryptedPassword = passwordCryptographyProvider.encrypt(password, customerEntity.getSalt());
+        //If password is same as stored in the db the customer is authenticated to customer auth entity is created with new access token using jwtTokenProvider.
+        if (encryptedPassword.equals(customerEntity.getPassword())) {
+            JwtTokenProvider jwtTokenProvider = new JwtTokenProvider(encryptedPassword);
+            CustomerAuthEntity customerAuthEntity = new CustomerAuthEntity();
+            customerAuthEntity.setCustomer(customerEntity);
+
+            final ZonedDateTime now = ZonedDateTime.now();
+            final ZonedDateTime expiresAt = now.plusHours(8);
+
+
+            customerAuthEntity.setAccessToken(jwtTokenProvider.generateToken(customerEntity.getUuid(), now, expiresAt));
+            customerAuthEntity.setLoginAt(now);
+            customerAuthEntity.setExpiresAt(expiresAt);
+            customerAuthEntity.setUuid(UUID.randomUUID().toString());
+
+            //Calls createCustomerAuth of customerAuthDao and create new CustomerAuthEntity in the DB with accessToken.
+            CustomerAuthEntity createdCustomerAuthEntity = customerAuthDao.createCustomerAuth(customerAuthEntity);
+            return createdCustomerAuthEntity;
+        } else {
+            throw new AuthenticationFailedException("ATH-002", "Invalid Credentials");//when Authenticate fails throws exception.
+        }
     }
 }

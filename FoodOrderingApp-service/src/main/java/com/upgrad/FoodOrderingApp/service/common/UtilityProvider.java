@@ -88,5 +88,19 @@ public class UtilityProvider {
         return true;
     }
 
+    //To validate the Authorization format
+    public boolean isValidAuthorizationFormat(String authorization)throws AuthenticationFailedException{
+        try {
+            byte[] decoded = Base64.getDecoder().decode(authorization.split("Basic ")[1]);
+            String decodedAuth = new String(decoded);
+            String[] decodedArray = decodedAuth.split(":");
+            String username = decodedArray[0];
+            String password = decodedArray[1];
+            return true;
+        }catch (ArrayIndexOutOfBoundsException exc){
+            throw new AuthenticationFailedException("ATH-003","Incorrect format of decoded customer name and password");
+        }
+    }
+
 }
 

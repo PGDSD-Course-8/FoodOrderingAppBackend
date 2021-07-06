@@ -4,6 +4,7 @@ package com.upgrad.FoodOrderingApp.api.controller;
 import com.upgrad.FoodOrderingApp.api.model.*;
 import com.upgrad.FoodOrderingApp.service.businness.CustomerService;
 import com.upgrad.FoodOrderingApp.service.common.UtilityProvider;
+import com.upgrad.FoodOrderingApp.service.entity.CustomerAuthEntity;
 import com.upgrad.FoodOrderingApp.service.entity.CustomerEntity;
 import com.upgrad.FoodOrderingApp.service.exception.AuthenticationFailedException;
 import com.upgrad.FoodOrderingApp.service.exception.AuthorizationFailedException;
@@ -64,4 +65,46 @@ public class CustomerController {
 
         return new ResponseEntity<SignupCustomerResponse>(signupCustomerResponse,HttpStatus.CREATED);
     }
+
+    /*This Method handles the Login request and takes authorization parameter in Base64 coded and produces a LoginResponse containing info customer
+    and response header containing bearer accessToken. If error returns the error code with corresponding Message.
+     */
+    @CrossOrigin
+    @RequestMapping(method = RequestMethod.POST,path = "/login",produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<LoginResponse> customerLogin (@RequestHeader("authorization") final String authorization)throws AuthenticationFailedException {
+
+        //Checking if the authorization is in valid format
+        utilityProvider.isValidAuthorizationFormat(authorization);
+
+        //Separating the username and password after decoding using Base64 decoder
+        byte[] decoded = Base64.getDecoder().decode(authorization.split("Basic ")[1]);
+        String decodedAuth = new String(decoded);
+        String[] decodedArray = decodedAuth.split(":");
+
+        // Calls CustomerService method authenticate to authenticate the login request. if authenticated it returns CustomerAuthEntity conating the details as required.
+        CustomerAuthEntity customerAuthEntity = customerService.authenticate(decodedArray[0],decodedArray[1]);
+
+
+        //Creating header to add the accessToken
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("access-token", customerAuthEntity.getAccessToken());
+
+        //For CrossOrigin and to let browser access header and set header in sessionStorage
+        List<String> header = new ArrayList<>();
+        header.add("access-token");
+        headers.setAccessControlExposeHeaders(header);
+
+        //Creating login response Containing variables as per the loginResponse.
+
+        LoginResponse loginResponse = new LoginResponse()
+                .id(customerAuthEntity.getCustomer().getUuid())
+                .contactNumber(customerAuthEntity.getCustomer().getContactNumber())
+                .emailAddress(customerAuthEntity.getCustomer().getEmail())
+                .firstName(customerAuthEntity.getCustomer().getFirstName())
+                .lastName(customerAuthEntity.getCustomer().getLastName())
+                .message("LOGGED IN SUCCESSFULLY");
+
+        return new ResponseEntity<LoginResponse>(loginResponse,headers,HttpStatus.OK);
+    }
+
 }
