@@ -109,4 +109,36 @@ public class CustomerService {
             throw new AuthenticationFailedException("ATH-002", "Invalid Credentials");//when Authenticate fails throws exception.
         }
     }
+
+    /* This method is to logout the customer using accessToken and return the CustomerAuthEntity .
+    If error throws exception with error code and error message.
+    */
+    @Transactional(propagation = Propagation.REQUIRED)
+    public CustomerAuthEntity logout(String accessToken) throws AuthorizationFailedException {
+
+        //Calls getCustomerAuthByAccessToken of customerAuthDao
+        CustomerAuthEntity customerAuthEntity = customerAuthDao.getCustomerAuthByAccessToken(accessToken);
+
+        //Paremters are checked as below if the conditions are not satisfied it throws exception.
+        if (customerAuthEntity == null) {//Checking if customerAuthEntity exist
+            throw new AuthorizationFailedException("ATHR-001", "Customer is not Logged in.");
+        }
+
+        if (customerAuthEntity.getLogoutAt() != null) {//Checking customerAuthEntity is logout or not
+            throw new AuthorizationFailedException("ATHR-002", "Customer is logged out. Log in again to access this endpoint.");
+        }
+
+        final ZonedDateTime now = ZonedDateTime.now();
+
+        if (customerAuthEntity.getExpiresAt().compareTo(now) < 0) {//Checking accessToken Expiry
+            throw new AuthorizationFailedException("ATHR-003", "Your session is expired. Log in again to access this endpoint.");
+        }
+
+        //Setting the logout time to now.
+        customerAuthEntity.setLogoutAt(ZonedDateTime.now());
+
+        //Calls customerLogout of customerAuthDao to update the CustomerAuthEntity and logsout the customer.
+        CustomerAuthEntity upatedCustomerAuthEntity = customerAuthDao.customerLogout(customerAuthEntity);
+        return upatedCustomerAuthEntity;
+    }
 }
