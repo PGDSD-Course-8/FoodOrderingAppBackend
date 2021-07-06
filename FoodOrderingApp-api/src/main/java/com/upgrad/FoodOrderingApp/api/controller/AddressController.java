@@ -75,4 +75,101 @@ public class AddressController {
         return new ResponseEntity<SaveAddressResponse>(saveAddressResponse,HttpStatus.CREATED);
     }
 
+    /*  The method handles get all Address  request.It takes the authorization
+     & produces response in AddressListResponse and returns list of Customer Address .If error Return error code and error Message.
+      */
+    @CrossOrigin
+    @RequestMapping(method = RequestMethod.GET,path = "/address/customer",produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<AddressListResponse> getAllSavedAddress(@RequestHeader("authorization")final String authorization)throws AuthorizationFailedException{
+
+        //Access the accessToken from the request Header
+        String accessToken = authorization.split("Bearer ")[1];
+
+        //Calls customerService getCustomer Method to check the validity of the customer.this methods returns the customerEntity  to be get all address.
+        CustomerEntity customerEntity = customerService.getCustomer(accessToken);
+
+        //Calls getAllAddress method of addressService to get list of address
+        List<AddressEntity> addressEntities = addressService.getAllAddress(customerEntity);
+        Collections.reverse(addressEntities); //Reversing the list to show last saved as first.
+
+        //Creating list of  AddressList using the Model AddressList & this List will be added to AddressListResponse
+        List<AddressList> addressLists = new LinkedList<>();
+        //Looping in for each address in the addressEntities & then Created AddressList using the each address data and adds to addressLists.
+        addressEntities.forEach(addressEntity -> {
+            AddressListState addressListState = new AddressListState()
+                    .stateName(addressEntity.getState().getStateName())
+                    .id(UUID.fromString(addressEntity.getState().getStateUuid()));
+            AddressList addressList = new AddressList()
+                    .id(UUID.fromString(addressEntity.getUuid()))
+                    .city(addressEntity.getCity())
+                    .flatBuildingName(addressEntity.getFlatBuilNo())
+                    .locality(addressEntity.getLocality())
+                    .pincode(addressEntity.getPincode())
+                    .state(addressListState);
+            addressLists.add(addressList);
+        });
+
+        //Creating the AddressListResponse by adding the addressLists.
+        AddressListResponse addressListResponse = new AddressListResponse().addresses(addressLists);
+        return new ResponseEntity<AddressListResponse>(addressListResponse,HttpStatus.OK);
+    }
+
+    /*  The method handles delete  Address  request.It takes the authorization and path variables address UUID
+  & produces response in DeleteAddressResponse and returns UUID of deleted address and Successfull message .If error Return error code and error Message.
+   */
+    @CrossOrigin
+    @RequestMapping(method = RequestMethod.DELETE,path = "/address/{address_id}",produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<DeleteAddressResponse> deleteSavedAddress(@RequestHeader ("authorization") final String authorization,@PathVariable(value = "address_id")final String addressUuid)throws AuthorizationFailedException,AddressNotFoundException{
+
+        //Access the accessToken from the request Header
+        String accessToken = authorization.split("Bearer ")[1];
+
+        //Calls customerService getCustomer Method to check the validity of the customer.this methods returns the customerEntity of whose address be deleted.
+        CustomerEntity customerEntity = customerService.getCustomer(accessToken);
+
+        //Calls getAddressByUUID method of addressService to get the address by uuid
+        AddressEntity addressEntity = addressService.getAddressByUUID(addressUuid,customerEntity);
+
+        //Calls deleteAddress method of addressService to delete the address from DB
+        AddressEntity deletedAddressEntity = addressService.deleteAddress(addressEntity);
+
+        //Creating DeleteAddressResponse containing UUID of deleted address and Successful Message.
+        DeleteAddressResponse deleteAddressResponse = new DeleteAddressResponse()
+                .id(UUID.fromString(deletedAddressEntity.getUuid()))
+                .status("ADDRESS DELETED SUCCESSFULLY");
+
+        return new ResponseEntity<DeleteAddressResponse>(deleteAddressResponse,HttpStatus.OK);
+
+
+    }
+
+    /*  The method handles States request.It produces response in StatesListResponse and returns UUID & stateName .If error Return error code and error Message.
+     */
+    @CrossOrigin
+    @RequestMapping(method = RequestMethod.GET,path = "/states",produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+
+    public ResponseEntity<StatesListResponse> getAllStates(){
+
+        //Calls getAllStates method in addressService and returns list of stateEntity.
+        List<StateEntity> stateEntities = addressService.getAllStates();
+
+        if(!stateEntities.isEmpty()) {//Checking if StateEntities is empty.
+            //Creates List of StateList using Model StateList.
+            List<StatesList> statesLists = new LinkedList<>();
+            //looping in to get details of all the the stateEntity & then create a stateList and add UUID of state and stateName and add the newly created StateList to the list of StateList.
+            stateEntities.forEach(stateEntity -> {
+                StatesList statesList = new StatesList()
+                        .id(UUID.fromString(stateEntity.getStateUuid()))
+                        .stateName(stateEntity.getStateName());
+                statesLists.add(statesList);
+            });
+
+            //Creating StatesListResponse & adding list of stateLists
+            StatesListResponse statesListResponse = new StatesListResponse().states(statesLists);
+            return new ResponseEntity<StatesListResponse>(statesListResponse, HttpStatus.OK);
+        }else
+            //Return empty set if stateEntities is empty.
+            return new ResponseEntity<StatesListResponse>(new StatesListResponse(),HttpStatus.OK);
+    }
+
 }

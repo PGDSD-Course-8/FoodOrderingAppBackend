@@ -86,4 +86,65 @@ public class AddressService {
         }
         return  stateEntity;
     }
+
+    /*This method is to getAddressByUUID of the customerEntity & using Address UUID.This method returns Address Entity.If error throws exception with error code and error message.
+     */
+    public AddressEntity getAddressByUUID(String addressUuid,CustomerEntity customerEntity)throws AuthorizationFailedException,AddressNotFoundException{
+        if(addressUuid == null){//Check for Address UUID not being empty
+            throw new AddressNotFoundException("ANF-005","Address id can not be empty");
+        }
+
+        //Calls getAddressByUuid method of addressDao to get addressEntity
+        AddressEntity addressEntity = addressDao.getAddressByUuid(addressUuid);
+        if (addressEntity == null){//Checking if null throws corresponding exception.
+            throw new AddressNotFoundException("ANF-003","No address by this id");
+        }
+
+        //Getting CustomerAddressEntity by address
+        CustomerAddressEntity customerAddressEntity = customerAddressDao.getCustomerAddressByAddress(addressEntity);
+
+        //Checking if the address belong to the customer requested.If no throws corresponding exception.
+        if(customerAddressEntity.getCustomer().getUuid() == customerEntity.getUuid()){
+            return addressEntity;
+        }else{
+            throw new AuthorizationFailedException("ATHR-004","You are not authorized to view/update/delete any one else's address");
+        }
+
+    }
+
+    /*This method is to getAllAddress of the customerEntity.This method takes Customer Entity and returns list of AddressEntity.
+     */
+    public List<AddressEntity> getAllAddress(CustomerEntity customerEntity) {
+
+        //Creating List of AddressEntities.
+        List<AddressEntity> addressEntities = new LinkedList<>();
+
+        //Calls Method of customerAddressDao,getAllCustomerAddressByCustomer and returns AddressList.
+        List<CustomerAddressEntity> customerAddressEntities  = customerAddressDao.getAllCustomerAddressByCustomer(customerEntity);
+        if(customerAddressEntities != null) { //Checking if CustomerAddressEntity is null else extracting address and adding to the addressEntites list.
+            customerAddressEntities.forEach(customerAddressEntity -> {
+                addressEntities.add(customerAddressEntity.getAddress());
+            });
+        }
+
+        return addressEntities;
+
+    }
+
+    /*This method is to deleteAddress of the customerEntity.This method returns Address Entity.
+     */
+    @Transactional(propagation = Propagation.REQUIRED)
+    public AddressEntity deleteAddress(AddressEntity addressEntity) {
+
+        AddressEntity deletedAddressEntity = addressDao.deleteAddress(addressEntity);
+        return deletedAddressEntity;
+    }
+
+    /*This method is to getAllStates in DB.
+     */
+    public List<StateEntity> getAllStates(){
+        //Calls getAllStates of stateDao to get all States.
+        List<StateEntity> stateEntities = stateDao.getAllStates();
+        return stateEntities;
+    }
 }
