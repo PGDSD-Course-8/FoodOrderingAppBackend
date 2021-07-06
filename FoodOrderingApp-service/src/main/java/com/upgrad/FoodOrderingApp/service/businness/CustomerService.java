@@ -141,4 +141,80 @@ public class CustomerService {
         CustomerAuthEntity upatedCustomerAuthEntity = customerAuthDao.customerLogout(customerAuthEntity);
         return upatedCustomerAuthEntity;
     }
+
+    /* This method is to updateCustomer the customer using customerEntity and return the CustomerEntity .
+      If error throws exception with error code and error message.
+      */
+    @Transactional(propagation = Propagation.REQUIRED)
+    public CustomerEntity updateCustomer(CustomerEntity customerEntity) throws UpdateCustomerException {
+
+        //Getting the CustomerEntity by getCustomerByUuid of customerDao
+        CustomerEntity customerToBeUpdated = customerDao.getCustomerByUuid(customerEntity.getUuid());
+
+        //Setting the new details to the customer entity .
+        customerToBeUpdated.setFirstName(customerEntity.getFirstName());
+        customerToBeUpdated.setLastName(customerEntity.getLastName());
+
+        //Calls updateCustomer of customerDao to update the customer data in the DB
+        CustomerEntity updatedCustomer = customerDao.updateCustomer(customerEntity);
+
+        return updatedCustomer;
+    }
+
+
+    /* This method is to updateCustomerPassword the customer using oldPassword,newPassword & customerEntity and return the CustomerEntity .
+     If error throws exception with error code and error message.
+     */
+    @Transactional(propagation = Propagation.REQUIRED)
+    public CustomerEntity updateCustomerPassword(String oldPassword,String newPassword,CustomerEntity customerEntity ) throws UpdateCustomerException {
+
+        if (!utilityProvider.isValidPassword(newPassword)) {//Checking if the Password is Weak.
+            throw new UpdateCustomerException("UCR-001", "Weak password!");
+        }
+
+        //Encrypting the oldpassword enter by user.
+        String encryptedOldPassword = passwordCryptographyProvider.encrypt(oldPassword, customerEntity.getSalt());
+
+        //Checking the oldPassword is correct as stored in the DB
+        if (encryptedOldPassword.equals(customerEntity.getPassword())) {
+            CustomerEntity tobeUpdatedCustomerEntity = customerDao.getCustomerByUuid(customerEntity.getUuid());
+
+            //Encyprting newPassword to store in the DB
+            String[] encryptedPassword = passwordCryptographyProvider.encrypt(newPassword);
+            tobeUpdatedCustomerEntity.setSalt(encryptedPassword[0]);
+            tobeUpdatedCustomerEntity.setPassword(encryptedPassword[1]);
+
+            //Updating the Customer with the new password adn salt.
+            CustomerEntity updatedCustomerEntity = customerDao.updateCustomer(tobeUpdatedCustomerEntity);
+
+            return updatedCustomerEntity;
+
+        } else {
+            throw new UpdateCustomerException("UCR-004", "Incorrect old password!");
+        }
+    }
+
+
+    /* This method is to getCustomer using accessToken and return the CustomerEntity .
+    If error throws exception with error code and error message.
+    */
+    public CustomerEntity getCustomer(String accessToken) throws AuthorizationFailedException {
+        CustomerAuthEntity customerAuthEntity = customerAuthDao.getCustomerAuthByAccessToken(accessToken);
+
+        if (customerAuthEntity == null) {//Checking if Customer not logged In
+            throw new AuthorizationFailedException("ATHR-001", "Customer is not Logged in.");
+        }
+
+        if (customerAuthEntity.getLogoutAt() != null) {//Checking if cutomer is logged Out
+            throw new AuthorizationFailedException("ATHR-002", "Customer is logged out. Log in again to access this endpoint.");
+        }
+
+        final ZonedDateTime now = ZonedDateTime.now();
+
+        if (customerAuthEntity.getExpiresAt().compareTo(now) <= 0) {//Checking accessToken is Expired.
+            throw new AuthorizationFailedException("ATHR-003", "Your session is expired. Log in again to access this endpoint.");
+        }
+        return customerAuthEntity.getCustomer();
+    }
+
 }
