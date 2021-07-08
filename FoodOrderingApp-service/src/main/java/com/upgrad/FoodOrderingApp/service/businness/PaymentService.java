@@ -23,9 +23,18 @@ public class PaymentService {
 
         //Calls getPaymentByUUID of the PaymentDao to get corresponding PaymentEntity.
         PaymentEntity paymentEntity = paymentDao.getPaymentByUUID(paymentId);
-        if(paymentEntity == null){      // Checking if Payment entity is null
+        if(paymentEntity == null) {      // Checking if Payment entity is null
             throw new PaymentMethodNotFoundException("PNF-002","No payment method found by this id");
         }
         return paymentEntity;
+    }
+
+    /* This method is to get All Payment Methods.Takes the couponName  and returns the PaymentEntity.
+       If error throws exception with error code and error message.
+       */
+    public List<PaymentEntity> getAllPaymentMethods() {
+        //Calls getAllPaymentMethods of paymentDao to get all Payment method in the DB
+        List<PaymentEntity> paymentEntities = paymentDao.getAllPaymentMethods();
+        return paymentEntities;
     }
 }
