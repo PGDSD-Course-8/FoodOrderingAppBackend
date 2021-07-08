@@ -87,4 +87,26 @@ public class OrderService {
         return orderItemEntities;
     }
 
+    /* This method is to saveOrder.Takes the OrdersEntity  and saves it to DB and returns saved the Coupon Entity.
+        If error throws exception with error code and error message.
+        */
+    @Transactional(propagation = Propagation.REQUIRED)
+    public OrdersEntity saveOrder(OrdersEntity ordersEntity) {
+
+        //Calls saveOrder of orderDao to save the Order entity.
+        OrdersEntity savedOrderEntity = orderDao.saveOrder(ordersEntity);
+        return savedOrderEntity;
+
+    }
+
+    /* This method is to saveOrderItem.Takes the orderItemEntity  and saves it to DB and returns saved the OrderItemEntity.
+    If error throws exception with error code and error message.
+    */
+    @Transactional(propagation = Propagation.REQUIRED)
+    public OrderItemEntity saveOrderItem (OrderItemEntity orderItemEntity){
+
+        //Calls saveOrderItem of orderItemDao to save the OrderItemEntity.
+        OrderItemEntity savedOrderItemEntity = orderItemDao.saveOrderItem(orderItemEntity);
+        return savedOrderItemEntity;
+    }
 }

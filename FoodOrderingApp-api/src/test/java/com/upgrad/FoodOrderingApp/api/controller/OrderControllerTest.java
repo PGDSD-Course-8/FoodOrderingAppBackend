@@ -52,9 +52,12 @@ public class OrderControllerTest {
     private RestaurantService mockRestaurantService;
 
     @MockBean
+    private PaymentService mockPaymentService;
+
+    @MockBean
     private ItemService mockItemService;
 
-    /*// ------------------------------------------ POST /order ------------------------------------------
+    // ------------------------------------------ POST /order ------------------------------------------
 
     //This test case passes when you are able to save order successfully.
     @Test
@@ -75,7 +78,7 @@ public class OrderControllerTest {
         when(mockOrderService.getCouponByCouponId(saveOrderRequest.getCouponId().toString()))
                 .thenReturn(new CouponEntity());
 
-        final OrderEntity orderEntity = new OrderEntity();
+        final OrdersEntity orderEntity = new OrdersEntity();
         final String orderId = UUID.randomUUID().toString();
         orderEntity.setUuid(orderId);
         when(mockOrderService.saveOrder(any())).thenReturn(orderEntity);
@@ -347,7 +350,6 @@ public class OrderControllerTest {
         verify(mockOrderService, times(0)).saveOrder(any());
         verify(mockOrderService, times(0)).saveOrderItem(any());
     }
-    */
 
     // ------------------------------------------ GET /order ------------------------------------------
 
