@@ -7,9 +7,12 @@ import com.upgrad.FoodOrderingApp.service.businness.CustomerService;
 import com.upgrad.FoodOrderingApp.service.businness.ItemService;
 import com.upgrad.FoodOrderingApp.service.businness.RestaurantService;
 import com.upgrad.FoodOrderingApp.service.entity.CategoryEntity;
+import com.upgrad.FoodOrderingApp.service.entity.CustomerEntity;
 import com.upgrad.FoodOrderingApp.service.entity.ItemEntity;
 import com.upgrad.FoodOrderingApp.service.entity.RestaurantEntity;
+import com.upgrad.FoodOrderingApp.service.exception.AuthorizationFailedException;
 import com.upgrad.FoodOrderingApp.service.exception.CategoryNotFoundException;
+import com.upgrad.FoodOrderingApp.service.exception.InvalidRatingException;
 import com.upgrad.FoodOrderingApp.service.exception.RestaurantNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -297,5 +300,32 @@ public class RestaurantController {
                 .categories(categoryLists);
 
         return new ResponseEntity<RestaurantDetailsResponse>(restaurantDetailsResponse,HttpStatus.OK);
+    }
+
+    /* The method handles update Restaurant Details. It takes restaurant_id as the path variable  and authorization in header and also customer rating.
+     & produces response in RestaurantUpdatedResponse and returns UUID of Updated restaurant from the db and successful message. If error returns error code and error message.
+     */
+    @CrossOrigin
+    @RequestMapping(method = RequestMethod.PUT,path = "/{restaurant_id}",params = "customer_rating",produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<RestaurantUpdatedResponse> updateRestaurantDetails(@RequestHeader ("authorization")final String authorization,@PathVariable(value = "restaurant_id")final String restaurantUuid,@RequestParam(value = "customer_rating")final Double customerRating) throws AuthorizationFailedException, RestaurantNotFoundException, InvalidRatingException {
+
+        //Access the accessToken from the request Header
+        final String accessToken = authorization.split("Bearer ")[1];
+
+        //Calls customerService getCustomerMethod to check the validity of the customer.this methods returns the customerEntity.
+        CustomerEntity customerEntity = customerService.getCustomer(accessToken);
+
+        //Calls restaurantByUUID method of restaurantService to get the restaurant entity.
+        RestaurantEntity restaurantEntity = restaurantService.restaurantByUUID(restaurantUuid);
+
+        //Calls updateRestaurantRating and passes restaurantentity found and customer rating and return the updated entity.
+        RestaurantEntity updatedRestaurantEntity = restaurantService.updateRestaurantRating(restaurantEntity,customerRating);
+
+        //Creating RestaurantUpdatedResponse containing the UUID of the updated Restaurant and the success message.
+        RestaurantUpdatedResponse restaurantUpdatedResponse = new RestaurantUpdatedResponse()
+                .id(UUID.fromString(restaurantUuid))
+                .status("RESTAURANT RATING UPDATED SUCCESSFULLY");
+
+        return new ResponseEntity<RestaurantUpdatedResponse>(restaurantUpdatedResponse,HttpStatus.OK);
     }
 }
