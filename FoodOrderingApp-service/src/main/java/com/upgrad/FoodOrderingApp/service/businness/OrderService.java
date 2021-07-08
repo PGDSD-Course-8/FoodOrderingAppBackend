@@ -63,4 +63,28 @@ public class OrderService {
         }
         return couponEntity;
     }
+
+    /* This method is to get Orders By Customers.Takes the customerUuid  and returns the list of OrdersEntity .
+    If error throws exception with error code and error message.
+    */
+    public List<OrdersEntity> getOrdersByCustomers(String customerUuid) {
+
+        //calls getCustomerByUuid to get customer from the DB.
+        CustomerEntity customerEntity = customerDao.getCustomerByUuid(customerUuid);
+
+        //Calls getOrdersByCustomers or OrderDao to get the past order list of the customer.
+        List<OrdersEntity> ordersEntities = orderDao.getOrdersByCustomers(customerEntity);
+        return ordersEntities;
+    }
+
+    /* This method is to get Order Items By Order.Takes the ordersEntity  and returns the list of OrderItemEntity .
+    If error throws exception with error code and error message.
+    */
+    public List<OrderItemEntity> getOrderItemsByOrder(OrdersEntity ordersEntity) {
+
+        //Calls getOrderItemsByOrder of orderItemDao to return list of OrderItemEntity corresponding to the order.
+        List<OrderItemEntity> orderItemEntities = orderItemDao.getOrderItemsByOrder(ordersEntity);
+        return orderItemEntities;
+    }
+
 }
