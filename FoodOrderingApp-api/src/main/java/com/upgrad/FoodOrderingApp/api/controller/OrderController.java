@@ -177,8 +177,10 @@ public class OrderController {
         CustomerEntity customerEntity = customerService.getCustomer(accessToken);
 
         //Calls orderService getCouponByCouponId method to get the CouponEntity by it uuid.
-        CouponEntity couponEntity = orderService.getCouponByCouponId(saveOrderRequest.getCouponId().toString());
-
+        CouponEntity couponEntity = null;
+        if(saveOrderRequest.getCouponId() != null) {
+            couponEntity = orderService.getCouponByCouponId(saveOrderRequest.getCouponId().toString());
+        }
         //Calls paymentService getPaymentByUUID method to get the PaymentEntity by it uuid.
         PaymentEntity paymentEntity = paymentService.getPaymentByUUID(saveOrderRequest.getPaymentId().toString());
 
