@@ -26,4 +26,14 @@ public class PaymentDao {
             return null;
         }
     }
+
+    //To get All Payment Methods from the db
+    public List<PaymentEntity> getAllPaymentMethods() {
+        try {
+            List<PaymentEntity> paymentEntities =entityManager.createNamedQuery("getAllPaymentMethods", PaymentEntity.class).getResultList();
+            return paymentEntities;
+        }catch (NoResultException nre){
+            return null;
+        }
+    }
 }
